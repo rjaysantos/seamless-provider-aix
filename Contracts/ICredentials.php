@@ -1,4 +1,5 @@
 <?php
+
 namespace Providers\Aix\Contracts;
 
 use App\Contracts\V2\IWalletCredentials;

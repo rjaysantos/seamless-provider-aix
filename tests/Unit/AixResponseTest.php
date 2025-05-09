@@ -11,6 +11,23 @@ class AixResponseTest extends TestCase
         return new AixResponse;
     }
 
+    public function test_casinoSuccess_givenData_expected()
+    {
+        $expected = new JsonResponse(
+            [
+                'success' => true,
+                'code' => 200,
+                'data' => 'test-url',
+                'error' => null
+            ]
+        );
+
+        $response = $this->makeResponse();
+        $result = $response->casinoSuccess('test-url');
+
+        $this->assertEquals($expected, $result);
+    }
+
     public function test_successResponse_stubResponse_expected()
     {
         $balance = 1000.0;

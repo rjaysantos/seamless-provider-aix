@@ -4,28 +4,43 @@ namespace Providers\Aix;
 
 use Exception;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use App\Contracts\V2\IWallet;
+use App\Exceptions\Casino\WalletErrorException;
+use Illuminate\Http\Request;
 use Providers\Aix\AixRepository;
 use Providers\Aix\AixCredentials;
 use Illuminate\Support\Facades\DB;
 use App\Libraries\Wallet\V2\WalletReport;
-use Providers\Aix\Exceptions\WalletErrorException;
 use Providers\Aix\Exceptions\InvalidSecretKeyException;
 use Providers\Aix\Exceptions\ProviderPlayerNotFoundException;
 use Providers\Aix\Exceptions\TransactionAlreadySettledException;
 use Providers\Aix\Exceptions\ProviderTransactionNotFoundException;
+use Providers\Aix\Exceptions\WalletErrorException as ProviderWalletErrorException;
 
 class AixService
 {
     private const PROVIDER_API_TIMEZONE = 'GMT+8';
-    
+
     public function __construct(
         private AixRepository $repository,
         private AixCredentials $credentials,
         private IWallet $wallet,
+        private AixApi $api,
         private WalletReport $report
-    ) {
+    ) {}
+
+    public function getLaunchUrl(Request $request): string
+    {
+        $this->repository->createIgnorePlayer(playID: $request->playId, currency: $request->currency);
+
+        $credentials = $this->credentials->getCredentialsByCurrency($request->currency);
+
+        $walletResponse = $this->wallet->Balance(credentials: $credentials, playID: $request->playId);
+
+        if ($walletResponse['status_code'] != 2100)
+            throw new WalletErrorException;
+
+        return $this->api->auth(credentials: $credentials, request: $request, balance: $walletResponse['credit']);
     }
 
     public function credit(Request $request): float
@@ -77,7 +92,7 @@ class AixService
             );
 
             if ($walletResponse['status_code'] != 2100)
-                throw new WalletErrorException;
+                throw new ProviderWalletErrorException;
 
             DB::connection('pgsql_write')->commit();
         } catch (Exception $e) {
