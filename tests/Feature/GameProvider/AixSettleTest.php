@@ -285,5 +285,21 @@ class AixSettleTest extends TestCase
         ]);
 
         $response->assertStatus(200);
+
+        $this->assertDatabaseHas('aix.reports', [
+            'trx_id' => 'testTransactionID',
+            'bet_amount' => 100.00,
+            'win_amount' => 200.00,
+            'updated_at' => null,
+            'created_at' => '2024-01-01 00:00:00'
+        ]);
+
+        $this->assertDatabaseMissing('gs5.reports', [
+            'trx_id' => 'testTransactionID',
+            'bet_amount' => 100.00,
+            'win_amount' => 200.00,
+            'updated_at' => '2024-01-01 00:00:00',
+            'created_at' => '2024-01-01 00:00:00'
+        ]);
     }
 }
