@@ -15,4 +15,12 @@ class AixResponse
             'error' => null
         ]);
     }
+
+    public function balance($balance): JsonResponse
+    {
+        return response()->json([
+            'status' => 1,
+            'balance' => $balance,
+        ]);
+    }
 }
