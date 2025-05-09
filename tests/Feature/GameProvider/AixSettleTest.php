@@ -294,7 +294,7 @@ class AixSettleTest extends TestCase
             'created_at' => '2024-01-01 00:00:00'
         ]);
 
-        $this->assertDatabaseMissing('gs5.reports', [
+        $this->assertDatabaseMissing('aix.reports', [
             'trx_id' => 'testTransactionID',
             'bet_amount' => 100.00,
             'win_amount' => 200.00,
