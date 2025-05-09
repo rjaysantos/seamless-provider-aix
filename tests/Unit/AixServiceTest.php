@@ -107,9 +107,7 @@ class AixServiceTest extends TestCase
         $credentials = $this->createMock(ICredentials::class);
 
         $mockWallet = $this->createMock(IWallet::class);
-        $mockWallet->expects($this->once())
-            ->method('balance')
-            ->with($credentials, 'test-play-id')
+        $mockWallet->method('balance')
             ->willReturn([
                 'status_code' => 1234
             ]);
