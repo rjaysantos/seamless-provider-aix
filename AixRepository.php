@@ -16,10 +16,10 @@ class AixRepository
             ]);
     }
 
-    public function getPlayerByUserIDProvider(string $userID): ?object
+    public function getPlayerByPlayID(string $playID): ?object
     {
         return DB::table('aix.players')
-            ->where('user_id_provider', $userID)
+            ->where('play_id', $playID)
             ->first();
     }
 }

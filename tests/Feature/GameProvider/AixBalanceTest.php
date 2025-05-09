@@ -22,14 +22,13 @@ class AixBalanceTest extends TestCase
     public function test_balance_validRequest_expectedData()
     {
         DB::table('aix.players')->insert([
-            'user_id_provider' => 27,
-            'play_id' => 'testPlayID',
+            'play_id' => '12345',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         $request = [
-            'user_id' => 27,
+            'user_id' => 12345,
             'prd_id' => 1
         ];
 
@@ -60,7 +59,7 @@ class AixBalanceTest extends TestCase
     public function test_balance_incompleteRequestParameters_expectedData($params)
     {
         $request = [
-            'user_id' => 27,
+            'user_id' => 12345,
             'prd_id' => 1
         ];
 
@@ -89,7 +88,7 @@ class AixBalanceTest extends TestCase
     public function test_balance_invalidRequestParameters_expectedData($params, $value)
     {
         $request = [
-            'user_id' => 27,
+            'user_id' => 12345,
             'prd_id' => 1
         ];
 
@@ -110,7 +109,7 @@ class AixBalanceTest extends TestCase
     {
         return [
             ['user_id', 'test'],
-            ['user_id', 27.0],
+            ['user_id', 12345.0],
             ['prd_id', 1.0],
             ['prd_id', 'test']
         ];
@@ -119,14 +118,13 @@ class AixBalanceTest extends TestCase
     public function test_balance_playerNotFoundException_expectedData()
     {
         DB::table('aix.players')->insert([
-            'user_id_provider' => 27,
-            'play_id' => 'testPlayID',
+            'play_id' => '12345',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         $request = [
-            'user_id' => 28,
+            'user_id' => 123456,
             'prd_id' => 1
         ];
 
@@ -145,14 +143,13 @@ class AixBalanceTest extends TestCase
     public function test_balance_invalidSecretKeyException_expectedData()
     {
         DB::table('aix.players')->insert([
-            'user_id_provider' => 27,
-            'play_id' => 'testPlayID',
+            'play_id' => '12345',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         $request = [
-            'user_id' => 27,
+            'user_id' => 12345,
             'prd_id' => 1
         ];
 
@@ -171,14 +168,13 @@ class AixBalanceTest extends TestCase
     public function test_balance_walletErrorException_expectedData()
     {
         DB::table('aix.players')->insert([
-            'user_id_provider' => 27,
-            'play_id' => 'testPlayID',
+            'play_id' => '12345',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         $request = [
-            'user_id' => 27,
+            'user_id' => 12345,
             'prd_id' => 1
         ];
 
@@ -198,7 +194,8 @@ class AixBalanceTest extends TestCase
         ]);
 
         $response->assertJson([
-            'status' => 1014
+            'status' => 0,
+            'error' => 'UNKNOWN_ERROR'
         ]);
 
         $response->assertStatus(200);

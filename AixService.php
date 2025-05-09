@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Providers\Aix\AixCredentials;
 use Providers\Aix\Exceptions\PlayerNotFoundException;
 use Providers\Aix\Exceptions\InvalidSecretKeyException;
+use Providers\Aix\Exceptions\WalletErrorException as WalletException;
 
 
 class AixService
@@ -35,7 +36,7 @@ class AixService
 
     public function getBalance(Request $request): float
     {
-        $playerDetails = $this->repository->getPlayerByUserIDProvider(userID: $request->user_id);
+        $playerDetails = $this->repository->getPlayerByPlayID(playID: $request->user_id);
 
         if (is_null($playerDetails) === true)
             throw new PlayerNotFoundException;
@@ -48,7 +49,7 @@ class AixService
         $walletResponse = $this->wallet->balance(credentials: $credentials, playID: $playerDetails->play_id);
 
         if ($walletResponse['status_code'] != 2100)
-            throw new WalletErrorException;
+            throw new WalletException;
 
         return $walletResponse['credit'];
     }

@@ -10,7 +10,8 @@ class WalletErrorException extends Exception
     public function render(): JsonResponse
     {
         return response()->json([
-            'status' => 1014
+            'status' => 0,
+            'error' => 'UNKNOWN_ERROR'
         ]);
     }
 }
