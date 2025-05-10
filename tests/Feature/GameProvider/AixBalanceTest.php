@@ -15,8 +15,7 @@ class AixBalanceTest extends TestCase
         DB::statement('TRUNCATE TABLE aix.players RESTART IDENTITY;');
         DB::statement('TRUNCATE TABLE aix.playgame RESTART IDENTITY;');
         DB::statement('TRUNCATE TABLE aix.reports RESTART IDENTITY;');
-        app()->bind(IWallet::class, 
-        TestWallet::class);
+        app()->bind(IWallet::class, TestWallet::class);
     }
     
     public function test_balance_validRequest_expectedData()
