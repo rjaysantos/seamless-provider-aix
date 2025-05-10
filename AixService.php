@@ -43,7 +43,7 @@ class AixService
         return $this->api->auth(credentials: $credentials, request: $request, balance: $walletResponse['credit']);
     }
 
-    public function credit(Request $request): float
+    public function settle(Request $request): float
     {
         $playerData = $this->repository->getPlayerByPlayID(playID: $request->user_id);
 

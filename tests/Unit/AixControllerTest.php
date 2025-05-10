@@ -80,7 +80,7 @@ class AixControllerTest extends TestCase
 
         $mockService = $this->createMock(AixService::class);
         $mockService->expects($this->once())
-            ->method('credit')
+            ->method('settle')
             ->with(request: $request);
 
         $controller = $this->makeController(service: $mockService);
@@ -98,7 +98,7 @@ class AixControllerTest extends TestCase
         ]);
 
         $stubService = $this->createMock(AixService::class);
-        $stubService->method('credit')
+        $stubService->method('settle')
             ->willReturn(1000.00);
 
         $mockResponse = $this->createMock(AixResponse::class);
