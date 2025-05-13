@@ -44,4 +44,20 @@ class AixController extends AbstractCasinoController
 
         return $this->response->successResponse(balance: $balance);
     }
+
+    public function debit(Request $request)
+    {
+        $this->validateProviderRequest(request: $request, rules: [
+            'user_id' => 'required|string',
+            'amount' => 'required|numeric',
+            'prd_id' => 'required|integer',
+            'txn_id' => 'required|string',
+            'round_id' => 'required|string',
+            'debit_time' => 'required|string'
+        ]);
+
+        $balance = $this->service->bet(request: $request);
+
+        return $this->response->successResponse(balance: $balance);
+    }
 }
