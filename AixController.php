@@ -13,9 +13,9 @@ class AixController extends AbstractCasinoController
     public function credit(Request $request)
     {
         $validate = Validator::make(data: $request->all(), rules: [
-            'user_id' => 'required|integer',
+            'user_id' => 'required|string',
             'amount' => 'required|numeric',
-            'game_id' => 'required|integer',
+            'prd_id' => 'required|integer',
             'txn_id' => 'required|string',
             'credit_time' => 'required|string'
         ]);

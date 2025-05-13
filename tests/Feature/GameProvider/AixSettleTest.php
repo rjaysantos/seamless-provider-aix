@@ -33,7 +33,7 @@ class AixSettleTest extends TestCase
         app()->bind(IWallet::class, $wallet::class);
 
         DB::table('aix.players')->insert([
-            'play_id' => '12345',
+            'play_id' => 'testPlayID',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
@@ -47,9 +47,9 @@ class AixSettleTest extends TestCase
         ]);
 
         $request = [
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ];
@@ -86,9 +86,9 @@ class AixSettleTest extends TestCase
     public function test_credit_incompleteRequest_expectedData($param)
     {
         $request = [
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ];
@@ -112,7 +112,7 @@ class AixSettleTest extends TestCase
         return [
             ['user_id'],
             ['amount'],
-            ['game_id'],
+            ['prd_id'],
             ['txn_id'],
             ['credit_time']
         ];
@@ -121,9 +121,9 @@ class AixSettleTest extends TestCase
     public function test_credit_playerNotFound_expectedData()
     {
         $request = [
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ];
@@ -143,15 +143,15 @@ class AixSettleTest extends TestCase
     public function test_credit_invalidSecretKey_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => '12345',
+            'play_id' => 'testPlayID',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         $request = [
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ];
@@ -171,7 +171,7 @@ class AixSettleTest extends TestCase
     public function test_credit_txnIDNotFound_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => '12345',
+            'play_id' => 'testPlayID',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
@@ -185,9 +185,9 @@ class AixSettleTest extends TestCase
         ]);
 
         $request = [
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'invalidTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ];
@@ -207,7 +207,7 @@ class AixSettleTest extends TestCase
     public function test_credit_transactionAlreadySettled_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => '12345',
+            'play_id' => 'testPlayID',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
@@ -221,9 +221,9 @@ class AixSettleTest extends TestCase
         ]);
 
         $request = [
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ];
@@ -254,7 +254,7 @@ class AixSettleTest extends TestCase
         app()->bind(IWallet::class, $wallet::class);
 
         DB::table('aix.players')->insert([
-            'play_id' => '12345',
+            'play_id' => 'testPlayID',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
@@ -268,9 +268,9 @@ class AixSettleTest extends TestCase
         ]);
 
         $request = [
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ];

@@ -25,9 +25,9 @@ class AixControllerTest extends TestCase
         $this->expectException(InvalidProviderRequestException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ]);
@@ -44,9 +44,9 @@ class AixControllerTest extends TestCase
         $this->expectException(InvalidProviderRequestException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ]);
@@ -60,9 +60,9 @@ class AixControllerTest extends TestCase
     public static function creditParams()
     {
         return [
-            ['user_id', 'test'],
+            ['user_id', 123],
             ['amount', 'test'],
-            ['game_id', 'test'],
+            ['prd_id', 'test'],
             ['txn_id', 123],
             ['credit_time', 123]
         ];
@@ -71,9 +71,9 @@ class AixControllerTest extends TestCase
     public function test_credit_mockService_settle()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ]);
@@ -90,9 +90,9 @@ class AixControllerTest extends TestCase
     public function test_credit_mockResponse_successResponse()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ]);
@@ -115,9 +115,9 @@ class AixControllerTest extends TestCase
         $expectedData = new JsonResponse;
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayID',
             'amount' => 200,
-            'game_id' => 1,
+            'prd_id' => 1,
             'txn_id' => 'testTransactionID',
             'credit_time' => '2024-01-01 00:00:00'
         ]);

@@ -78,7 +78,7 @@ class AixService
 
             $report = $this->report->makeSlotReport(
                 transactionID: $request->txn_id,
-                gameCode: $request->game_id,
+                gameCode: $request->prd_id,
                 betTime: $transactionDate
             );
 
