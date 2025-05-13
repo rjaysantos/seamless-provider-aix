@@ -27,4 +27,19 @@ class AixResponseTest extends TestCase
 
         $this->assertEquals($expected, $result);
     }
+
+    public function test_balance_stubResponse_expected()
+    {
+        $balance = 1000.0;
+
+        $expected = new JsonResponse([
+            'status' => 1,
+            'balance' => $balance
+        ]);
+
+        $response = $this->makeResponse();
+        $result = $response->balance(balance: $balance);
+
+        $this->assertEquals(expected: $expected, actual: $result);
+    }
 }
