@@ -197,7 +197,7 @@ class AixServiceTest extends TestCase
     public function test_bet_mockRepository_getPlayerByPlayID()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -213,7 +213,7 @@ class AixServiceTest extends TestCase
             ->with(playID: $request->user_id)
             ->willReturn((object) [
                 'currency' => 'IDR',
-                'play_id' => 'testPlayID'
+                'play_id' => 'testPlayer'
             ]);
 
         $credentials = $this->createMock(ICredentials::class);
@@ -256,7 +256,7 @@ class AixServiceTest extends TestCase
         $this->expectException(PlayerNotFoundException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -275,7 +275,7 @@ class AixServiceTest extends TestCase
     public function test_bet_mockRepository_getTransactionByTrxID()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -294,7 +294,7 @@ class AixServiceTest extends TestCase
         $mockRepository->method('getPlayerByPlayID')
             ->willReturn((object) [
                 'currency' => 'IDR',
-                'play_id' => 'testPlayID'
+                'play_id' => 'testPlayer'
             ]);
 
         $credentials = $this->createMock(ICredentials::class);
@@ -337,7 +337,7 @@ class AixServiceTest extends TestCase
         $this->expectException(TransactionAlreadyExistsException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -349,7 +349,7 @@ class AixServiceTest extends TestCase
         $stubRepository->method('getPlayerByPlayID')
             ->willReturn((object) [
                 'currency' => 'IDR',
-                'play_id' => 'testPlayID'
+                'play_id' => 'testPlayer'
             ]);
 
         $stubRepository->method('getTransactionByTrxID')
@@ -364,7 +364,7 @@ class AixServiceTest extends TestCase
     public function test_bet_mockCredentials_getCredentialsByCurrency()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -381,7 +381,7 @@ class AixServiceTest extends TestCase
         $stubRepository->method('getPlayerByPlayID')
             ->willReturn((object) [
                 'currency' => 'IDR',
-                'play_id' => 'testPlayID'
+                'play_id' => 'testPlayer'
             ]);
 
         $credentials = $this->createMock(ICredentials::class);
@@ -426,7 +426,7 @@ class AixServiceTest extends TestCase
         $this->expectException(InvalidSecretKeyException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -469,7 +469,7 @@ class AixServiceTest extends TestCase
     public function test_bet_mockWallet_balance()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -483,7 +483,7 @@ class AixServiceTest extends TestCase
         $stubRepository->method('getPlayerByPlayID')
             ->willReturn((object) [
                 'currency' => 'IDR',
-                'play_id' => 'testPlayID'
+                'play_id' => 'testPlayer'
             ]);
 
         $stubRepository->method('getTransactionByTrxID')
@@ -502,7 +502,7 @@ class AixServiceTest extends TestCase
             ->method('balance')
             ->with(
                 credentials: $credentials, 
-                playID: 'testPlayID'
+                playID: 'testPlayer'
             )
             ->willReturn([
                 'credit' => 1000.0,
@@ -534,7 +534,7 @@ class AixServiceTest extends TestCase
         $this->expectException(ProviderWalletException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -575,7 +575,7 @@ class AixServiceTest extends TestCase
         $this->expectException(InsufficientFundException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -619,7 +619,7 @@ class AixServiceTest extends TestCase
     public function test_bet_mockRepository_createTransction()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -682,7 +682,7 @@ class AixServiceTest extends TestCase
     public function test_bet_mockWalletReport_makeSlotReport()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -743,7 +743,7 @@ class AixServiceTest extends TestCase
     public function test_bet_mockWallet_wager()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -811,7 +811,7 @@ class AixServiceTest extends TestCase
         $this->expectException(ProviderWalletException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -865,7 +865,7 @@ class AixServiceTest extends TestCase
     public function test_bet_stubWallet_expected()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',

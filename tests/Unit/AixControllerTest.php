@@ -17,7 +17,6 @@ class AixControllerTest extends TestCase
         $response ??= $this->createStub(AixResponse::class);
 
         return new AixController(service: $service, response: $response);
-
     }
 
     #[DataProvider('debitRequestParams')]
@@ -26,7 +25,7 @@ class AixControllerTest extends TestCase
         $this->expectException(InvalidProviderRequestException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -46,7 +45,7 @@ class AixControllerTest extends TestCase
         $this->expectException(InvalidProviderRequestException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -63,7 +62,7 @@ class AixControllerTest extends TestCase
     public static function debitRequestParams()
     {
         return [
-            ['user_id', 'test'],
+            ['user_id', 123],
             ['amount', 'test'],
             ['prd_id', 'test'],
             ['txn_id', 12345],
@@ -75,7 +74,7 @@ class AixControllerTest extends TestCase
     public function test_debit_mockService_bet()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -95,7 +94,7 @@ class AixControllerTest extends TestCase
     public function test_debit_mockResponse_balance()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -115,7 +114,7 @@ class AixControllerTest extends TestCase
     public function test_debit_stubResponse_expectedData()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',

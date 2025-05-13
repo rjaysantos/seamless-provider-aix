@@ -21,7 +21,7 @@ class AixController extends AbstractCasinoController
     public function debit(Request $request)
     {
         $this->validateProviderRequest(request: $request, rules: [
-            'user_id' => 'required|integer',
+            'user_id' => 'required|string',
             'amount' => 'required|numeric',
             'prd_id' => 'required|integer',
             'txn_id' => 'required|string',
