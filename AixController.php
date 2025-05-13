@@ -21,7 +21,7 @@ class AixController extends AbstractCasinoController
     public function balance(Request $request)
     {
         $this->validateProviderRequest(request: $request, rules: [
-            'user_id' => 'required|integer',
+            'user_id' => 'required|string',
             'prd_id' => 'required|integer'
         ]);
 

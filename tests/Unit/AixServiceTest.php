@@ -180,7 +180,7 @@ class AixServiceTest extends TestCase
     public function test_getBalance_mockRepository_getPlayerByPlayID()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'prd_id' => 1
         ]);
 
@@ -191,7 +191,7 @@ class AixServiceTest extends TestCase
             ->method('getPlayerByPlayID')
             ->with(userID: $request->user_id)
             ->willReturn((object)[
-                'play_id' => '12345',
+                'play_id' => 'testPlayer',
                 'currency' => 'IDR'
             ]);
 
@@ -219,7 +219,7 @@ class AixServiceTest extends TestCase
         $this->expectException(PlayerNotFoundException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'prd_id' => 1
         ]);
 
@@ -234,7 +234,7 @@ class AixServiceTest extends TestCase
     public function test_getBalance_mockCredentials_getCredentialsByCurrency()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'prd_id' => 1
         ]);
 
@@ -243,7 +243,7 @@ class AixServiceTest extends TestCase
         $stubRepository = $this->createMock(AixRepository::class);
         $stubRepository->method('getPlayerByPlayID')
             ->willReturn((object)[
-                'play_id' => '12345',
+                'play_id' => 'testPlayer',
                 'currency' => 'IDR'
             ]);
 
@@ -273,7 +273,7 @@ class AixServiceTest extends TestCase
         $this->expectException(InvalidSecretKeyException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'prd_id' => 1
         ]);
 
@@ -282,7 +282,7 @@ class AixServiceTest extends TestCase
         $stubRepository = $this->createMock(AixRepository::class);
         $stubRepository->method('getPlayerByPlayID')
             ->willReturn((object) [
-                'play_id' => '12345',
+                'play_id' => 'testPlayer',
                 'currency' => 'IDR'
             ]);
 
@@ -312,7 +312,7 @@ class AixServiceTest extends TestCase
     public function test_getBalance_mockWallet_balance()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'prd_id' => 1
         ]);
         
@@ -321,7 +321,7 @@ class AixServiceTest extends TestCase
         $stubRepository = $this->createMock(AixRepository::class);
         $stubRepository->method('getPlayerByPlayID')
             ->willReturn((object)[
-                'play_id' => '12345',
+                'play_id' => 'testPlayer',
                 'currency' => 'IDR'
             ]);
 
@@ -338,7 +338,7 @@ class AixServiceTest extends TestCase
             ->method('balance')
             ->with(
                 credentials: $credentials,
-                playID: '12345'
+                playID: 'testPlayer'
             )
             ->willReturn([
                 'credit' => 1000.0,
@@ -354,7 +354,7 @@ class AixServiceTest extends TestCase
         $this->expectException(WalletException::class);
 
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'prd_id' => 1
         ]);
 
@@ -363,7 +363,7 @@ class AixServiceTest extends TestCase
         $stubRepository = $this->createMock(AixRepository::class);
         $stubRepository->method('getPlayerByPlayID')
             ->willReturn((object) [
-                'play_id' => '12345',
+                'play_id' => 'testPlayer',
                 'currency' => 'IDR'
             ]);
 
@@ -386,7 +386,7 @@ class AixServiceTest extends TestCase
     public function test_getBalance_stubWallet_expectedData()
     {
         $request = new Request([
-            'user_id' => 12345,
+            'user_id' => 'testPlayer',
             'prd_id' => 1
         ]);
 
@@ -397,7 +397,7 @@ class AixServiceTest extends TestCase
         $stubRepository = $this->createMock(AixRepository::class);
         $stubRepository->method('getPlayerByPlayID')
             ->willReturn((object) [
-                'play_id' => '12345',
+                'play_id' => 'testPlayer',
                 'currency' => 'IDR'
             ]);
 

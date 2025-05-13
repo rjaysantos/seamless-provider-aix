@@ -46,7 +46,7 @@ class AixService
         if ($request->header('secret-key') !== $credentials->getSecretKey())
             throw new InvalidSecretKeyException;
 
-        $walletResponse = $this->wallet->balance(credentials: $credentials, playID: $playerDetails->play_id);
+        $walletResponse = $this->wallet->balance(credentials: $credentials, playID: $request->user_id);
 
         if ($walletResponse['status_code'] != 2100)
             throw new WalletException;

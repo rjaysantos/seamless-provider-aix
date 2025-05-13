@@ -26,7 +26,7 @@ class AixControllerTest extends TestCase
         $this->expectException(InvalidProviderRequestException::class);
 
         $request = new Request([
-            'user_id' => 27,
+            'user_id' => 'testPlayID',
             'prd_id' => 1
         ]);
 
@@ -42,7 +42,7 @@ class AixControllerTest extends TestCase
         $this->expectException(InvalidProviderRequestException::class);
 
         $request = new Request([
-            'user_id' => 27,
+            'user_id' => 'testPlayID',
             'prd_id' => 1
         ]);
 
@@ -55,7 +55,7 @@ class AixControllerTest extends TestCase
     public static function balanceParams()
     {
         return [
-            ['user_id', 'test'],
+            ['user_id', 123],
             ['prd_id', 'test']
         ];
     }
@@ -63,7 +63,7 @@ class AixControllerTest extends TestCase
     public function test_balance_mockService_getBalance()
     {
         $request = new Request([
-            'user_id' => 27,
+            'user_id' => 'testPlayID',
             'prd_id' => 1
         ]);
 
@@ -79,7 +79,7 @@ class AixControllerTest extends TestCase
     public function test_balance_mockResponse_balance()
     {
         $request = new Request([
-            'user_id' => 27,
+            'user_id' => 'testPlayID',
             'prd_id' => 1
         ]);
 
@@ -99,7 +99,7 @@ class AixControllerTest extends TestCase
     public function test_balance_stubResponse_expectedData()
     {
         $request = new Request([
-            'user_id' => 27,
+            'user_id' => 'testPlayID',
             'prd_id' => 1
         ]);
 
