@@ -15,4 +15,11 @@ class AixRepository
                 'currency' => $currency
             ]);
     }
+
+    public function getPlayerByPlayID(string $playID): ?object
+    {
+        return DB::table('aix.players')
+            ->where('play_id', $playID)
+            ->first();
+    }
 }
