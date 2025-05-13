@@ -5,8 +5,8 @@ namespace Providers\Aix;
 use Exception;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Providers\Aix\AixRepository;
 use App\Contracts\V2\IWallet;
+use Providers\Aix\AixRepository;
 use Illuminate\Support\Facades\DB;
 use App\Libraries\Wallet\V2\WalletReport;
 use App\Exceptions\Casino\WalletErrorException;
@@ -14,6 +14,7 @@ use Providers\Aix\Exceptions\PlayerNotFoundException;
 use Providers\Aix\Exceptions\InsufficientFundException;
 use Providers\Aix\Exceptions\InvalidSecretKeyException;
 use Providers\Aix\Exceptions\TransactionAlreadyExistsException;
+use Providers\Aix\Exceptions\TransactionAlreadySettledException;
 use Providers\Aix\Exceptions\ProviderTransactionNotFoundException;
 use Providers\Aix\Exceptions\WalletErrorException as ProviderWalletException;
 
@@ -147,7 +148,7 @@ class AixService
             throw new ProviderTransactionNotFoundException;
 
         if (is_null($transactionData->updated_at) === false)
-            throw new TransactionAlreadyExistsException;
+            throw new TransactionAlreadySettledException;
 
         try {
             DB::connection('pgsql_write')->beginTransaction();

@@ -7,16 +7,17 @@ use App\Contracts\V2\IWallet;
 use Providers\Aix\AixService;
 use Providers\Aix\AixRepository;
 use Providers\Aix\AixCredentials;
-use Providers\Aix\Contracts\ICredentials;
 use Wallet\V1\ProvSys\Transfer\Report;
 use App\Libraries\Wallet\V2\WalletReport;
-use Providers\Aix\Exceptions\WalletErrorException as WalletException;
+use Providers\Aix\Contracts\ICredentials;
 use App\Exceptions\Casino\WalletErrorException;
-use Providers\Aix\Exceptions\InsufficientFundException;
 use Providers\Aix\Exceptions\PlayerNotFoundException;
+use Providers\Aix\Exceptions\InsufficientFundException;
 use Providers\Aix\Exceptions\InvalidSecretKeyException;
 use Providers\Aix\Exceptions\TransactionAlreadyExistsException;
+use Providers\Aix\Exceptions\TransactionAlreadySettledException;
 use Providers\Aix\Exceptions\ProviderTransactionNotFoundException;
+use Providers\Aix\Exceptions\WalletErrorException as WalletException;
 
 class AixServiceTest extends TestCase
 {
@@ -1426,9 +1427,9 @@ class AixServiceTest extends TestCase
         $service->settle(request: $request);
     }
 
-    public function test_settle_stubRepositoryTransactionAlreadyExist_TransactionAlreadySettledException()
+    public function test_settle_stubRepositoryTransactionAlreadySettled_TransactionAlreadySettledException()
     {
-        $this->expectException(TransactionAlreadyExistsException::class);
+        $this->expectException(TransactionAlreadySettledException::class);
 
         $request = new Request([
             'user_id' => 'testPlayID',
