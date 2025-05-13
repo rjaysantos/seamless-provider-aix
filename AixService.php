@@ -2,22 +2,30 @@
 
 namespace Providers\Aix;
 
-use App\Contracts\V2\IWallet;
-use App\Exceptions\Casino\WalletErrorException;
+use Exception;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Providers\Aix\AixCredentials;
+use App\Contracts\V2\IWallet;
+use Illuminate\Support\Facades\DB;
+use App\Libraries\Wallet\V2\WalletReport;
+use App\Exceptions\Casino\WalletErrorException;
 use Providers\Aix\Exceptions\PlayerNotFoundException;
+use Providers\Aix\Exceptions\InsufficientFundException;
 use Providers\Aix\Exceptions\InvalidSecretKeyException;
-use Providers\Aix\Exceptions\WalletErrorException as WalletException;
+use Providers\Aix\Exceptions\TransactionAlreadyExistsException;
+use Providers\Aix\Exceptions\WalletErrorException as ProviderWalletException;
 
 
 class AixService
 {
+    private const PROVIDER_API_TIMEZONE = 'GMT+8';
+
     public function __construct(
         private AixRepository $repository,
         private AixCredentials $credentials,
         private IWallet $wallet,
-        private AixApi $api
+        private AixApi $api,
+        private WalletReport $walletReport
     ) {}
 
     public function getLaunchUrl(Request $request): string
@@ -49,8 +57,73 @@ class AixService
         $walletResponse = $this->wallet->balance(credentials: $credentials, playID: $request->user_id);
 
         if ($walletResponse['status_code'] != 2100)
-            throw new WalletException;
+            throw new ProviderWalletException;
 
         return $walletResponse['credit'];
+    }
+
+    public function bet(Request $request): float
+    {
+        $playerDetails = $this->repository->getPlayerByPlayID(playID: $request->user_id);
+
+        if (is_null($playerDetails) === true)
+            throw new PlayerNotFoundException;
+
+        $transactionData = $this->repository->getTransactionByTrxID(transactionID: $request->txn_id);
+
+        if (is_null($transactionData) === false)
+            throw new TransactionAlreadyExistsException;
+
+        $credentials = $this->credentials->getCredentialsByCurrency(currency: $playerDetails->currency);
+        
+        if ($request->header('secret-key') !== $credentials->getSecretKey())
+            throw new InvalidSecretKeyException;
+
+        $balanceResponse = $this->wallet->balance(credentials: $credentials, playID: $request->user_id);
+
+        if ($balanceResponse['status_code'] !== 2100)
+            throw new ProviderWalletException;
+
+        if ($balanceResponse['credit'] < $request->amount)
+            throw new InsufficientFundException;
+
+        try {
+            DB::connection('pgsql_write')->beginTransaction();
+
+            $transactionDate = Carbon::parse($request->debit_time, self::PROVIDER_API_TIMEZONE)
+                ->setTimezone(8)
+                ->format('Y-m-d H:i:s');
+
+            $this->repository->createTransaction(
+                transactionID: $request->txn_id,
+                betAmount: $request->amount,
+                transactionDate: $transactionDate
+            );
+
+            $report = $this->walletReport->makeSlotReport(
+                transactionID: $request->txn_id,
+                gameCode: $request->prd_id,
+                betTime: $transactionDate
+            );
+
+            $walletResponse = $this->wallet->wager(
+                credentials: $credentials,
+                playID: $playerDetails->play_id,
+                currency: $playerDetails->currency,
+                transactionID: $request->txn_id,
+                amount: $request->amount,
+                report: $report
+            );
+
+            if ($walletResponse['status_code'] != 2100)
+                throw new ProviderWalletException;
+
+            DB::connection('pgsql_write')->commit();
+        } catch (Exception $e) {
+            DB::connection('pgsql_write')->rollback();
+            throw $e;
+        }
+
+        return $walletResponse['credit_after'];
     }
 }

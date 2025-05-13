@@ -22,4 +22,24 @@ class AixRepository
             ->where('play_id', $playID)
             ->first();
     }
+
+    public function getTransactionByTrxID(string $transactionID): ?object
+    {
+        return DB::table('aix.reports')
+            ->where('trx_id', $transactionID)
+            ->first();
+    }
+
+    public function createTransaction(string $transactionID, float $betAmount, string $transactionDate): void
+    {
+        DB::connection('pgsql_write')
+            ->table('aix.reports')
+            ->insert([
+                'trx_id' => $transactionID,
+                'bet_amount' => $betAmount,
+                'win_amount' => 0,
+                'updated_at' => null,
+                'created_at' => $transactionDate
+            ]);
+    }
 }
