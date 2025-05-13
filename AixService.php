@@ -171,7 +171,7 @@ class AixService
 
             $walletResponse = $this->wallet->payout(
                 credentials: $credentials,
-                playID: $playerData->play_id,
+                playID: $request->user_id,
                 currency: $playerData->currency,
                 transactionID: "payout-{$request->txn_id}",
                 amount: $request->amount,
