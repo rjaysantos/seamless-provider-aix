@@ -27,7 +27,7 @@ class AixController extends AbstractCasinoController
 
         $balance = $this->service->getBalance(request: $request);
 
-        return $this->response->balance(balance: $balance);
+        return $this->response->successResponse(balance: $balance);
     }
 
     public function credit(Request $request)

@@ -28,7 +28,7 @@ class AixResponseTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function test_balance_stubResponse_expected()
+    public function test_successResponse_stubResponse_expected()
     {
         $balance = 1000.0;
 
@@ -38,7 +38,7 @@ class AixResponseTest extends TestCase
         ]);
 
         $response = $this->makeResponse();
-        $result = $response->balance(balance: $balance);
+        $result = $response->successResponse(balance: $balance);
 
         $this->assertEquals(expected: $expected, actual: $result);
     }

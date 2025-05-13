@@ -76,7 +76,7 @@ class AixControllerTest extends TestCase
         $controller->balance(request: $request);
     }
 
-    public function test_balance_mockResponse_balance()
+    public function test_balance_mockResponse_successResponse()
     {
         $request = new Request([
             'user_id' => 'testPlayID',
@@ -89,7 +89,7 @@ class AixControllerTest extends TestCase
 
         $mockResponse = $this->createMock(AixResponse::class);
         $mockResponse->expects($this->once())
-            ->method('balance')
+            ->method('successResponse')
             ->with(balance: 1000.0);
 
         $controller = $this->makeController(service: $stubService, response: $mockResponse);
@@ -110,7 +110,7 @@ class AixControllerTest extends TestCase
             ->willReturn(1000.0);
 
         $stubResponse = $this->createMock(AixResponse::class);
-        $stubResponse->method('balance')
+        $stubResponse->method('successResponse')
             ->willReturn($expected);
 
         $controller = $this->makeController(service: $stubService, response: $stubResponse);

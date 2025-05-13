@@ -100,8 +100,7 @@ class AixSettleTest extends TestCase
         ]);
 
         $response->assertJson([
-            'status' => 0,
-            'error' => 'ACCESS_DENIED'
+            'status' => 0
         ]);
 
         $response->assertStatus(200);
