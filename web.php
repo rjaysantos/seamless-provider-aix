@@ -14,5 +14,4 @@ Route::prefix('aix')->group(function () {
         Route::post('balance', [AixController::class, 'balance']);
         Route::post('debit', [AixController::class, 'debit']);
     });
-    
 });

@@ -42,6 +42,26 @@ class AixService
         return $this->api->auth(credentials: $credentials, request: $request, balance: $walletResponse['credit']);
     }
 
+    public function getBalance(Request $request): float
+    {
+        $playerDetails = $this->repository->getPlayerByPlayID(playID: $request->user_id);
+
+        if (is_null($playerDetails) === true)
+            throw new PlayerNotFoundException;
+
+        $credentials = $this->credentials->getCredentialsByCurrency(currency: $playerDetails->currency);
+        
+        if ($request->header('secret-key') !== $credentials->getSecretKey())
+            throw new InvalidSecretKeyException;
+
+        $walletResponse = $this->wallet->balance(credentials: $credentials, playID: $request->user_id);
+
+        if ($walletResponse['status_code'] != 2100)
+            throw new ProviderWalletException;
+
+        return $walletResponse['credit'];
+    }
+
     public function bet(Request $request): float
     {
         $playerDetails = $this->repository->getPlayerByPlayID(playID: $request->user_id);

@@ -13,4 +13,12 @@ class InvalidProviderRequestException extends Exception
             'status' => 0
         ]);
     }
+
+    /**
+     * use this to add more log context
+     */
+    public function context(): array
+    {
+        return ['error' => $this->getMessage()];
+    }
 }

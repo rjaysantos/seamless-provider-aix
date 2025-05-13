@@ -17,7 +17,19 @@ class AixController extends AbstractCasinoController
         if ($validate->fails())
             throw new InvalidProviderRequestException;
     }
-    
+
+    public function balance(Request $request)
+    {
+        $this->validateProviderRequest(request: $request, rules: [
+            'user_id' => 'required|string',
+            'prd_id' => 'required|integer'
+        ]);
+
+        $balance = $this->service->getBalance(request: $request);
+
+        return $this->response->balance(balance: $balance);
+    }
+
     public function debit(Request $request)
     {
         $this->validateProviderRequest(request: $request, rules: [
