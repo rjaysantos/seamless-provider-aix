@@ -11,11 +11,12 @@ use Providers\Aix\AixRepository;
 use Providers\Aix\AixCredentials;
 use Illuminate\Support\Facades\DB;
 use App\Libraries\Wallet\V2\WalletReport;
+use Providers\Aix\Exceptions\PlayerNotFoundException;
 use Providers\Aix\Exceptions\InvalidSecretKeyException;
-use Providers\Aix\Exceptions\ProviderPlayerNotFoundException;
 use Providers\Aix\Exceptions\TransactionAlreadySettledException;
 use Providers\Aix\Exceptions\ProviderTransactionNotFoundException;
-use Providers\Aix\Exceptions\WalletErrorException as ProviderWalletErrorException;
+use Providers\Aix\Exceptions\WalletErrorException as WalletException;
+
 
 class AixService
 {
@@ -43,12 +44,32 @@ class AixService
         return $this->api->auth(credentials: $credentials, request: $request, balance: $walletResponse['credit']);
     }
 
+    public function getBalance(Request $request): float
+    {
+        $playerDetails = $this->repository->getPlayerByPlayID(playID: $request->user_id);
+
+        if (is_null($playerDetails) === true)
+            throw new PlayerNotFoundException;
+
+        $credentials = $this->credentials->getCredentialsByCurrency(currency: $playerDetails->currency);
+        
+        if ($request->header('secret-key') !== $credentials->getSecretKey())
+            throw new InvalidSecretKeyException;
+
+        $walletResponse = $this->wallet->balance(credentials: $credentials, playID: $request->user_id);
+
+        if ($walletResponse['status_code'] != 2100)
+            throw new WalletException;
+
+        return $walletResponse['credit'];
+    }
+
     public function settle(Request $request): float
     {
         $playerData = $this->repository->getPlayerByPlayID(playID: $request->user_id);
 
         if (is_null($playerData) === true)
-            throw new ProviderPlayerNotFoundException;
+            throw new PlayerNotFoundException;
 
         $credentials = $this->credentials->getCredentialsByCurrency(currency: $playerData->currency);
 
@@ -92,7 +113,7 @@ class AixService
             );
 
             if ($walletResponse['status_code'] != 2100)
-                throw new ProviderWalletErrorException;
+                throw new WalletException;
 
             DB::connection('pgsql_write')->commit();
         } catch (Exception $e) {

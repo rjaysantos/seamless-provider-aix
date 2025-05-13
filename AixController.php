@@ -10,18 +10,35 @@ class AixController extends AbstractCasinoController
 {
     public function __construct(protected AixService $service, protected AixResponse $response){}
 
+    private function validateProviderRequest(Request $request, array $rules)
+    {
+        $validate = Validator::make($request->all(), $rules);
+
+        if ($validate->fails())
+            throw new InvalidProviderRequestException;
+    }
+
+    public function balance(Request $request)
+    {
+        $this->validateProviderRequest(request: $request, rules: [
+            'user_id' => 'required|string',
+            'prd_id' => 'required|integer'
+        ]);
+
+        $balance = $this->service->getBalance(request: $request);
+
+        return $this->response->balance(balance: $balance);
+    }
+
     public function credit(Request $request)
     {
-        $validate = Validator::make(data: $request->all(), rules: [
+        $this->validateProviderRequest(request: $request, rules: [
             'user_id' => 'required|string',
             'amount' => 'required|numeric',
             'prd_id' => 'required|integer',
             'txn_id' => 'required|string',
             'credit_time' => 'required|string'
         ]);
-
-        if ($validate->fails())
-            throw new InvalidProviderRequestException;
 
         $balance = $this->service->settle(request: $request);
 
