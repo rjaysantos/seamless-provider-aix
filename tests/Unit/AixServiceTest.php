@@ -7,15 +7,17 @@ use App\Contracts\V2\IWallet;
 use Providers\Aix\AixService;
 use Providers\Aix\AixRepository;
 use Providers\Aix\AixCredentials;
-use Providers\Aix\Contracts\ICredentials;
 use Wallet\V1\ProvSys\Transfer\Report;
 use App\Libraries\Wallet\V2\WalletReport;
-use Providers\Aix\Exceptions\WalletErrorException as WalletException;
+use Providers\Aix\Contracts\ICredentials;
 use App\Exceptions\Casino\WalletErrorException;
-use Providers\Aix\Exceptions\InsufficientFundException;
 use Providers\Aix\Exceptions\PlayerNotFoundException;
+use Providers\Aix\Exceptions\InsufficientFundException;
 use Providers\Aix\Exceptions\InvalidSecretKeyException;
 use Providers\Aix\Exceptions\TransactionAlreadyExistsException;
+use Providers\Aix\Exceptions\TransactionAlreadySettledException;
+use Providers\Aix\Exceptions\ProviderTransactionNotFoundException;
+use Providers\Aix\Exceptions\WalletErrorException as WalletException;
 
 class AixServiceTest extends TestCase
 {
@@ -1164,5 +1166,601 @@ class AixServiceTest extends TestCase
         $result = $service->bet(request: $request);
 
         $this->assertSame(expected: $expected, actual: $result);
+    }
+
+    public function test_settle_mockRepository_getPlayerByPlayID()
+    {
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'secretKey');
+
+        $mockRepository = $this->createMock(AixRepository::class);
+        $mockRepository->expects($this->once())
+            ->method('getPlayerByPlayID')
+            ->with(playID: $request->user_id)
+            ->willReturn((object) [
+                'play_id' => '12345',
+                'currency' => 'IDR'
+            ]);
+
+        $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $stubCredentials = $this->createMock(AixCredentials::class);
+        $stubCredentials->method('getCredentialsByCurrency')
+            ->willReturn($providerCredentials);
+
+        $mockRepository->method('getTransactionByTrxID')
+            ->willReturn((object) [
+                'trx_id' => 'testTransactionID',
+                'updated_at' => null
+            ]);
+
+        $stubReport = $this->createMock(WalletReport::class);
+        $stubReport->method('makeSlotReport')
+            ->willReturn(new Report);
+
+        $stubWallet = $this->createMock(IWallet::class);
+        $stubWallet->method('payout')
+            ->willReturn([
+                'credit_after' => 1200.00,
+                'status_code' => 2100
+            ]);
+
+        $service = $this->makeService(
+            repository: $mockRepository,
+            credentials: $stubCredentials,
+            walletReport: $stubReport,
+            wallet: $stubWallet
+        );
+
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_stubRepositoryNullPlayer_ProviderPlayerNotFoundException()
+    {
+        $this->expectException(PlayerNotFoundException::class);
+
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+        
+        $request->headers->set('secret-key', 'secretKey');
+
+        $stubRepository = $this->createMock(AixRepository::class);
+        $stubRepository->method('getPlayerByPlayID')
+            ->willReturn(null);
+
+        $service = $this->makeService(repository: $stubRepository);
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_mockCredentails_getCredentialsByCurrency()
+    {
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'secretKey');
+
+        $stubRepository = $this->createMock(AixRepository::class);
+        $stubRepository->method('getPlayerByPlayID')
+            ->willReturn((object) [
+                'play_id' => 'testPlayID',
+                'currency' => 'IDR'
+            ]);
+
+        $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $mockCredentials = $this->createMock(AixCredentials::class);
+        $mockCredentials->expects($this->once())
+            ->method('getCredentialsByCurrency')
+            ->with(currency: 'IDR')
+            ->willReturn($providerCredentials);
+
+        $stubRepository->method('getTransactionByTrxID')
+            ->willReturn((object) [
+                'trx_id' => 'testTransactionID',
+                'updated_at' => null
+            ]);
+
+        $stubReport = $this->createMock(WalletReport::class);
+        $stubReport->method('makeSlotReport')
+            ->willReturn(new Report);
+
+        $stubWallet = $this->createMock(IWallet::class);
+        $stubWallet->method('payout')
+            ->willReturn([
+                'credit_after' => 1200.00,
+                'status_code' => 2100
+            ]);
+
+        $service = $this->makeService(
+            repository: $stubRepository,
+            credentials: $mockCredentials,
+            walletReport: $stubReport,
+            wallet: $stubWallet
+        );
+
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_stubRepositoryInvalidSecretKey_InvalidSecretKeyException()
+    {
+        $this->expectException(InvalidSecretKeyException::class);
+
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'invalidSecretKey');
+
+        $stubRepository = $this->createMock(AixRepository::class);
+        $stubRepository->method('getPlayerByPlayID')
+            ->willReturn((object) [
+                'play_id' => 'testPlayID',
+                'currency' => 'IDR'
+            ]);
+
+        $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $stubCredentials = $this->createMock(AixCredentials::class);
+        $stubCredentials->method('getCredentialsByCurrency')
+            ->willReturn($providerCredentials);
+
+        $service = $this->makeService(repository: $stubRepository, credentials: $stubCredentials,);
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_mockRepository_getTransactionByTrxID()
+    {
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'secretKey');
+
+        $mockRepository = $this->createMock(AixRepository::class);
+        $mockRepository->method('getPlayerByPlayID')
+            ->willReturn((object) [
+                'play_id' => 'testPlayID',
+                'currency' => 'IDR'
+            ]);
+
+        $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $stubCredentials = $this->createMock(AixCredentials::class);
+        $stubCredentials->method('getCredentialsByCurrency')
+            ->willReturn($providerCredentials);
+
+        $mockRepository->expects($this->once())
+            ->method('getTransactionByTrxID')
+            ->with(trxID: $request->txn_id)
+            ->willReturn((object) [
+                'trx_id' => 'testTransactionID',
+                'updated_at' => null
+            ]);
+
+        $stubReport = $this->createMock(WalletReport::class);
+        $stubReport->method('makeSlotReport')
+            ->willReturn(new Report);
+
+        $stubWallet = $this->createMock(IWallet::class);
+        $stubWallet->method('payout')
+            ->willReturn([
+                'credit_after' => 1200.00,
+                'status_code' => 2100
+            ]);
+
+        $service = $this->makeService(
+            repository: $mockRepository,
+            credentials: $stubCredentials,
+            walletReport: $stubReport,
+            wallet: $stubWallet
+        );
+
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_stubRepositoryNullTransaction_TransactionNotFoundException()
+    {
+        $this->expectException(ProviderTransactionNotFoundException::class);
+
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'secretKey');
+
+        $stubRepository = $this->createMock(AixRepository::class);
+        $stubRepository->method('getPlayerByPlayID')
+            ->willReturn((object) [
+                'play_id' => 'testPlayID',
+                'currency' => 'IDR'
+            ]);
+
+        $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $stubCredentials = $this->createMock(AixCredentials::class);
+        $stubCredentials->method('getCredentialsByCurrency')
+            ->willReturn($providerCredentials);
+
+        $stubRepository->method('getTransactionByTrxID')
+            ->willReturn(null);
+
+        $service = $this->makeService(repository: $stubRepository, credentials: $stubCredentials,);
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_stubRepositoryTransactionAlreadySettled_TransactionAlreadySettledException()
+    {
+        $this->expectException(TransactionAlreadySettledException::class);
+
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'secretKey');
+
+        $stubRepository = $this->createMock(AixRepository::class);
+        $stubRepository->method('getPlayerByPlayID')
+            ->willReturn((object) [
+                'play_id' => 'testPlayID',
+                'currency' => 'IDR'
+            ]);
+
+        $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $stubCredentials = $this->createMock(AixCredentials::class);
+        $stubCredentials->method('getCredentialsByCurrency')
+            ->willReturn($providerCredentials);
+
+        $stubRepository->method('getTransactionByTrxID')
+            ->willReturn((object) [
+                'trx_id' => 'testTransactionID',
+                'updated_at' => '2021-01-01 00:00:00'
+            ]);
+
+        $service = $this->makeService(repository: $stubRepository, credentials: $stubCredentials,);
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_mockRepository_settleTransaction()
+    {
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'secretKey');
+
+        $mockRepository = $this->createMock(AixRepository::class);
+        $mockRepository->method('getPlayerByPlayID')
+            ->willReturn((object) [
+                'play_id' => 'testPlayID',
+                'currency' => 'IDR'
+            ]);
+
+        $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $stubCredentials = $this->createMock(AixCredentials::class);
+        $stubCredentials->method('getCredentialsByCurrency')
+            ->willReturn($providerCredentials);
+
+        $mockRepository->method('getTransactionByTrxID')
+            ->willReturn((object) [
+                'trx_id' => 'testTransactionID',
+                'updated_at' => null
+            ]);
+
+        $mockRepository->expects($this->once())
+            ->method('settleTransaction')
+            ->with(
+                trxID: $request->txn_id,
+                winAmount: 200,
+                settleTime: '2024-01-01 00:00:00'
+            );
+
+        $stubReport = $this->createMock(WalletReport::class);
+        $stubReport->method('makeSlotReport')
+            ->willReturn(new Report);
+
+        $stubWallet = $this->createMock(IWallet::class);
+        $stubWallet->method('payout')
+            ->willReturn([
+                'credit_after' => 1200.00,
+                'status_code' => 2100
+            ]);
+
+        $service = $this->makeService(
+            repository: $mockRepository,
+            credentials: $stubCredentials,
+            walletReport: $stubReport,
+            wallet: $stubWallet
+        );
+
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_mockReport_makeSlotReport()
+    {
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'secretKey');
+
+        $stubRepository = $this->createMock(AixRepository::class);
+        $stubRepository->method('getPlayerByPlayID')
+            ->willReturn((object) [
+                'play_id' => 'testPlayID',
+                'currency' => 'IDR'
+            ]);
+
+        $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $stubCredentials = $this->createMock(AixCredentials::class);
+        $stubCredentials->method('getCredentialsByCurrency')
+            ->willReturn($providerCredentials);
+
+        $stubRepository->method('getTransactionByTrxID')
+            ->willReturn((object) [
+                'trx_id' => 'testTransactionID',
+                'updated_at' => null
+            ]);
+
+        $mockReport = $this->createMock(WalletReport::class);
+        $mockReport->expects($this->once())
+            ->method('makeSlotReport')
+            ->with(
+                transactionID: $request->txn_id,
+                gameCode: $request->prd_id,
+                betTime: '2024-01-01 00:00:00'
+            )
+            ->willReturn(new Report);
+
+        $stubWallet = $this->createMock(IWallet::class);
+        $stubWallet->method('payout')
+            ->willReturn([
+                'credit_after' => 1200.00,
+                'status_code' => 2100
+            ]);
+
+        $service = $this->makeService(
+            repository: $stubRepository,
+            credentials: $stubCredentials,
+            walletReport: $mockReport,
+            wallet: $stubWallet
+        );
+
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_mockWallet_payout()
+    {
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'secretKey');
+
+        $stubRepository = $this->createMock(AixRepository::class);
+        $stubRepository->method('getPlayerByPlayID')
+            ->willReturn((object) [
+                'play_id' => 'testPlayID',
+                'currency' => 'IDR'
+            ]);
+
+        $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $stubCredentials = $this->createMock(AixCredentials::class);
+        $stubCredentials->method('getCredentialsByCurrency')
+            ->willReturn($providerCredentials);
+
+        $stubRepository->method('getTransactionByTrxID')
+            ->willReturn((object) [
+                'trx_id' => 'testTransactionID',
+                'updated_at' => null
+            ]);
+
+        $stubReport = $this->createMock(WalletReport::class);
+        $stubReport->method('makeSlotReport')
+            ->willReturn(new Report);
+
+        $mockWallet = $this->createMock(IWallet::class);
+        $mockWallet->expects($this->once())
+            ->method('payout')
+            ->with(
+                credentials: $providerCredentials,
+                playID: 'testPlayID',
+                currency: 'IDR',
+                transactionID: "payout-{$request->txn_id}",
+                amount: 200.00,
+                report: new Report
+            )
+            ->willReturn([
+                'credit_after' => 1200.00,
+                'status_code' => 2100
+            ]);
+
+        $service = $this->makeService(
+            repository: $stubRepository,
+            credentials: $stubCredentials,
+            walletReport: $stubReport,
+            wallet: $mockWallet
+        );
+
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_stubWalletInvalidStatus_WalletErrorException()
+    {
+        $this->expectException(WalletException::class);
+
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'secretKey');
+
+        $stubRepository = $this->createMock(AixRepository::class);
+        $stubRepository->method('getPlayerByPlayID')
+            ->willReturn((object) [
+                'play_id' => 'testPlayID',
+                'currency' => 'IDR'
+            ]);
+
+        $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $stubCredentials = $this->createMock(AixCredentials::class);
+        $stubCredentials->method('getCredentialsByCurrency')
+            ->willReturn($providerCredentials);
+
+        $stubRepository->method('getTransactionByTrxID')
+            ->willReturn((object) [
+                'trx_id' => 'testTransactionID',
+                'updated_at' => null
+            ]);
+
+        $stubReport = $this->createMock(WalletReport::class);
+        $stubReport->method('makeSlotReport')
+            ->willReturn(new Report);
+
+        $stubWallet = $this->createMock(IWallet::class);
+        $stubWallet->method('payout')
+            ->willReturn([
+                'status_code' => 999
+            ]);
+
+        $service = $this->makeService(
+            repository: $stubRepository,
+            credentials: $stubCredentials,
+            walletReport: $stubReport,
+            wallet: $stubWallet
+        );
+
+        $service->settle(request: $request);
+    }
+
+    public function test_settle_stubWallet_expectedData()
+    {
+        $expectedData = 1200.00;
+
+        $request = new Request([
+            'user_id' => 'testPlayID',
+            'amount' => 200,
+            'prd_id' => 1,
+            'txn_id' => 'testTransactionID',
+            'credit_time' => '2024-01-01 00:00:00'
+        ]);
+
+        $request->headers->set('secret-key', 'secretKey');
+
+        $stubRepository = $this->createMock(AixRepository::class);
+        $stubRepository->method('getPlayerByPlayID')
+            ->willReturn((object) [
+                'play_id' => 'testPlayID',
+                'currency' => 'IDR'
+            ]);
+
+            $providerCredentials = $this->createMock(ICredentials::class);
+        $providerCredentials->method('getSecretKey')
+            ->willReturn('secretKey');
+
+        $stubCredentials = $this->createMock(AixCredentials::class);
+        $stubCredentials->method('getCredentialsByCurrency')
+            ->willReturn($providerCredentials);
+
+        $stubRepository->method('getTransactionByTrxID')
+            ->willReturn((object) [
+                'trx_id' => 'testTransactionID',
+                'updated_at' => null
+            ]);
+
+        $stubReport = $this->createMock(WalletReport::class);
+        $stubReport->method('makeSlotReport')
+            ->willReturn(new Report);
+
+        $stubWallet = $this->createMock(IWallet::class);
+        $stubWallet->method('payout')
+            ->willReturn([
+                'credit_after' => 1200.00,
+                'status_code' => 2100
+            ]);
+
+        $service = $this->makeService(
+            repository: $stubRepository,
+            credentials: $stubCredentials,
+            walletReport: $stubReport,
+            wallet: $stubWallet
+        );
+
+        $response = $service->settle(request: $request);
+
+        $this->assertSame(expected: $expectedData, actual: $response);
     }
 }

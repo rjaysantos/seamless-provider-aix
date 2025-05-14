@@ -6,6 +6,7 @@ use Exception;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Contracts\V2\IWallet;
+use Providers\Aix\AixRepository;
 use Illuminate\Support\Facades\DB;
 use App\Libraries\Wallet\V2\WalletReport;
 use App\Exceptions\Casino\WalletErrorException;
@@ -13,6 +14,8 @@ use Providers\Aix\Exceptions\PlayerNotFoundException;
 use Providers\Aix\Exceptions\InsufficientFundException;
 use Providers\Aix\Exceptions\InvalidSecretKeyException;
 use Providers\Aix\Exceptions\TransactionAlreadyExistsException;
+use Providers\Aix\Exceptions\TransactionAlreadySettledException;
+use Providers\Aix\Exceptions\ProviderTransactionNotFoundException;
 use Providers\Aix\Exceptions\WalletErrorException as ProviderWalletException;
 
 
@@ -111,6 +114,66 @@ class AixService
                 playID: $playerDetails->play_id,
                 currency: $playerDetails->currency,
                 transactionID: $request->txn_id,
+                amount: $request->amount,
+                report: $report
+            );
+
+            if ($walletResponse['status_code'] != 2100)
+                throw new ProviderWalletException;
+
+            DB::connection('pgsql_write')->commit();
+        } catch (Exception $e) {
+            DB::connection('pgsql_write')->rollback();
+            throw $e;
+        }
+
+        return $walletResponse['credit_after'];
+    }
+
+    public function settle(Request $request): float
+    {
+        $playerData = $this->repository->getPlayerByPlayID(playID: $request->user_id);
+
+        if (is_null($playerData) === true)
+            throw new PlayerNotFoundException;
+
+        $credentials = $this->credentials->getCredentialsByCurrency(currency: $playerData->currency);
+
+        if ($request->header('secret-key') !== $credentials->getSecretKey())
+            throw new InvalidSecretKeyException;
+
+        $transactionData = $this->repository->getTransactionByTrxID(transactionID: $request->txn_id);
+
+        if (is_null($transactionData) === true)
+            throw new ProviderTransactionNotFoundException;
+
+        if (is_null($transactionData->updated_at) === false)
+            throw new TransactionAlreadySettledException;
+
+        try {
+            DB::connection('pgsql_write')->beginTransaction();
+
+            $transactionDate = Carbon::parse($request->credit_time, self::PROVIDER_API_TIMEZONE)
+                ->setTimezone('GMT+8')
+                ->format('Y-m-d H:i:s');
+
+            $this->repository->settleTransaction(
+                trxID: $request->txn_id,
+                winAmount: $request->amount,
+                settleTime: $transactionDate
+            );
+
+            $report = $this->walletReport->makeSlotReport(
+                transactionID: $request->txn_id,
+                gameCode: $request->prd_id,
+                betTime: $transactionDate
+            );
+
+            $walletResponse = $this->wallet->payout(
+                credentials: $credentials,
+                playID: $request->user_id,
+                currency: $playerData->currency,
+                transactionID: "payout-{$request->txn_id}",
                 amount: $request->amount,
                 report: $report
             );

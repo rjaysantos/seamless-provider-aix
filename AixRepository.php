@@ -42,4 +42,15 @@ class AixRepository
                 'created_at' => $transactionDate
             ]);
     }
+
+    public function settleTransaction(string $trxID, float $winAmount, string $settleTime): void
+    {
+        DB::connection('pgsql_write')
+            ->table('aix.reports')
+            ->where('trx_id', $trxID)
+            ->update([
+                'win_amount' => $winAmount,
+                'updated_at' => $settleTime
+            ]);
+    }
 }

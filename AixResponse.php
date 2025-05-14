@@ -16,7 +16,7 @@ class AixResponse
         ]);
     }
 
-    public function balance($balance): JsonResponse
+    public function successResponse($balance): JsonResponse
     {
         return response()->json([
             'status' => 1,

@@ -27,7 +27,22 @@ class AixController extends AbstractCasinoController
 
         $balance = $this->service->getBalance(request: $request);
 
-        return $this->response->balance(balance: $balance);
+        return $this->response->successResponse(balance: $balance);
+    }
+
+    public function credit(Request $request)
+    {
+        $this->validateProviderRequest(request: $request, rules: [
+            'user_id' => 'required|string',
+            'amount' => 'required|numeric',
+            'prd_id' => 'required|integer',
+            'txn_id' => 'required|string',
+            'credit_time' => 'required|string'
+        ]);
+
+        $balance = $this->service->settle(request: $request);
+
+        return $this->response->successResponse(balance: $balance);
     }
 
     public function debit(Request $request)
@@ -43,6 +58,6 @@ class AixController extends AbstractCasinoController
 
         $balance = $this->service->bet(request: $request);
 
-        return $this->response->balance(balance: $balance);
+        return $this->response->successResponse(balance: $balance);
     }
 }
