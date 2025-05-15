@@ -1,17 +1,19 @@
 <?php
+
 namespace Providers\Aix;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class AixRepository
 {
-    public function createIgnorePlayer(string $playID, string $currency): void
+    public function createIgnorePlayer(string $playID, string $username, string $currency): void
     {
         DB::connection('pgsql_write')
             ->table('aix.players')
             ->insertOrIgnore([
                 'play_id' => $playID,
-                'username' => $playID,
+                'username' => $username,
                 'currency' => $currency
             ]);
     }
@@ -23,33 +25,55 @@ class AixRepository
             ->first();
     }
 
-    public function getTransactionByTrxID(string $transactionID): ?object
+    public function getTransactionByExtID(string $extID): ?object
     {
         return DB::table('aix.reports')
-            ->where('trx_id', $transactionID)
+            ->where('ext_id', $extID)
             ->first();
     }
 
-    public function createTransaction(string $transactionID, float $betAmount, string $transactionDate): void
+    private function getWebID(string $playID)
     {
+        if (preg_match_all('/u(\d+)/', $playID, $matches)) {
+            $lastNumber = end($matches[1]);
+            return $lastNumber;
+        }
+    }
+
+    public function createTransaction(
+        string $extID,
+        string $playID,
+        string $username,
+        string $currency,
+        string $gameCode,
+        float $betAmount,
+        float $betWinlose,
+        string $transactionDate,
+    ): void {
         DB::connection('pgsql_write')
             ->table('aix.reports')
             ->insert([
-                'trx_id' => $transactionID,
+                'ext_id' => $extID,
+                'username' => $username,
+                'play_id' => $playID,
+                'web_id' => $this->getWebID($playID),
+                'currency' => $currency,
+                'game_code' => $gameCode,
                 'bet_amount' => $betAmount,
-                'win_amount' => 0,
-                'updated_at' => null,
+                'bet_valid' => $betAmount,
+                'bet_winlose' => $betWinlose,
+                'updated_at' => $transactionDate,
                 'created_at' => $transactionDate
             ]);
     }
 
-    public function settleTransaction(string $trxID, float $winAmount, string $settleTime): void
+    public function settleTransaction(string $extID, float $winloseAmount, string $settleTime): void
     {
         DB::connection('pgsql_write')
             ->table('aix.reports')
-            ->where('trx_id', $trxID)
+            ->where('ext_id', $extID)
             ->update([
-                'win_amount' => $winAmount,
+                'bet_winlose' => $winloseAmount,
                 'updated_at' => $settleTime
             ]);
     }

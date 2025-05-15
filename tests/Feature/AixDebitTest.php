@@ -21,7 +21,7 @@ class AixDebitTest extends TestCase
     public function test_debit_validRequest_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayer',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
@@ -43,11 +43,11 @@ class AixDebitTest extends TestCase
                 ];
             }
         };
-        
+
         app()->bind(IWallet::class, $wallet::class);
 
         $request = [
-            'user_id' => 'testPlayer',
+            'user_id' => 'testPlayeru001',
             'amount' => 100.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -67,11 +67,16 @@ class AixDebitTest extends TestCase
         $response->assertStatus(200);
 
         $this->assertDatabaseHas('aix.reports', [
-            'trx_id' => 'testTxnID',
+            'ext_id' => 'wager-testTxnID',
+            'username' => 'testUsername',
+            'play_id' => 'testPlayeru001',
+            'web_id' => 1,
+            'currency' => 'IDR',
+            'game_code' => '1',
             'bet_amount' => 100.00,
-            'win_amount' => 0,
+            'bet_winlose' => 0,
             'created_at' => '2025-01-01 00:00:00',
-            'updated_at' => null
+            'updated_at' => '2025-01-01 00:00:00'
         ]);
     }
 
@@ -79,7 +84,7 @@ class AixDebitTest extends TestCase
     public function test_debit_missingRequestParams_expectedData($param)
     {
         $request = [
-            'user_id' => 'testPlayer',
+            'user_id' => 'testPlayeru001',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -115,13 +120,13 @@ class AixDebitTest extends TestCase
     public function test_debit_invalidSecretKey_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayer',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         $request = [
-            'user_id' => 'testPlayer',
+            'user_id' => 'testPlayeru001',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -144,13 +149,13 @@ class AixDebitTest extends TestCase
     public function test_debit_playerNotFound_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayer',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         $request = [
-            'user_id' => 'testPlayer1',
+            'user_id' => 'testPlayeru0011',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -170,24 +175,30 @@ class AixDebitTest extends TestCase
         $response->assertStatus(200);
     }
 
+
     public function test_debit_transactionAlreadyExist_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayer',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         DB::table('aix.reports')->insert([
-            'trx_id' => 'testTxnID',
+            'ext_id' => 'wager-testTxnID',
+            'username' => 'username',
+            'play_id' => 'testPlayeru001',
+            'web_id' => 1,
+            'currency' => 'IDR',
+            'game_code' => 1,
             'bet_amount' => 100.0,
-            'win_amount' => 0,
-            'updated_at' => null,
+            'bet_winlose' => 0,
+            'updated_at' => '2025-01-01 00:00:00',
             'created_at' => '2025-01-01 00:00:00'
         ]);
 
         $request = [
-            'user_id' => 'testPlayer',
+            'user_id' => 'testPlayeru001',
             'amount' => 100.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -210,13 +221,13 @@ class AixDebitTest extends TestCase
     public function test_debit_insufficientFunds_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayer',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         $request = [
-            'user_id' => 'testPlayer',
+            'user_id' => 'testPlayeru001',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -251,7 +262,7 @@ class AixDebitTest extends TestCase
     public function test_debit_invalidWalletBalanceResponse_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayer',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
@@ -264,11 +275,11 @@ class AixDebitTest extends TestCase
                 ];
             }
         };
-        
+
         app()->bind(IWallet::class, $wallet::class);
 
         $request = [
-            'user_id' => 'testPlayer',
+            'user_id' => 'testPlayeru001',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',
@@ -291,7 +302,7 @@ class AixDebitTest extends TestCase
     public function test_debit_invalidWalletWagerResponse_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayer',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
@@ -312,11 +323,11 @@ class AixDebitTest extends TestCase
                 ];
             }
         };
-        
+
         app()->bind(IWallet::class, $wallet::class);
 
         $request = [
-            'user_id' => 'testPlayer',
+            'user_id' => 'testPlayeru001',
             'amount' => 1000.0,
             'prd_id' => 1,
             'txn_id' => 'testTxnID',

@@ -72,7 +72,8 @@ class AixApiTest extends TestCase
             'language' => 'en',
             'currency' => 'IDR',
             'device' => 1,
-            'gameId' => 2
+            'gameId' => 2,
+            'username' => 'username'
         ]);
 
         $balance = 100;
@@ -85,7 +86,7 @@ class AixApiTest extends TestCase
                 [
                     'user' => [
                         'id' => 'test-play-id',
-                        'name' => 'test-play-id',
+                        'name' => 'username',
                         'balance' => 100,
                         'domain_url' => 'www.host.com',
                         'language' => 'en',
@@ -123,6 +124,7 @@ class AixApiTest extends TestCase
             'currency' => 'IDR',
             'device' => 1,
             'gameId' => 2,
+            'username' => 'username'
         ]);
 
         $balance = 100;
@@ -151,6 +153,7 @@ class AixApiTest extends TestCase
             'currency' => 'IDR',
             'device' => 1,
             'gameId' => 2,
+            'username' => 'username'
         ]);
 
         $balance = 100;
@@ -179,6 +182,7 @@ class AixApiTest extends TestCase
             'currency' => 'IDR',
             'device' => 1,
             'gameId' => 2,
+            'username' => 'username'
         ]);
 
         $balance = 100;

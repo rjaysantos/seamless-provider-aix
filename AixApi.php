@@ -24,7 +24,7 @@ class AixApi
         $request = [
             'user' => [
                 'id' => $request->playId,
-                'name' => $request->playId,
+                'name' => $request->username,
                 'balance' => $balance,
                 'domain_url' => $request->host,
                 'language' => 'en',

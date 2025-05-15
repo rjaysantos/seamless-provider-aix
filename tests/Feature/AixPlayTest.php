@@ -66,7 +66,7 @@ class AixPlayTest extends TestCase
 
         $this->assertDatabaseHas('aix.players', [
             'play_id' => 'testPlayID',
-            'username' => 'testPlayID',
+            'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
@@ -75,7 +75,7 @@ class AixPlayTest extends TestCase
                 $request->hasHeader('ag-code', 'ais') &&
                 $request->hasHeader('ag-token', 'ag-token') &&
                 $request['user']['id'] == 'testPlayID' &&
-                $request['user']['name'] == 'testPlayID' &&
+                $request['user']['name'] == 'testUsername' &&
                 $request['user']['balance'] == 1000.0 &&
                 $request['user']['language'] == 'en' &&
                 $request['user']['domain_url'] == 'testHost.com' &&

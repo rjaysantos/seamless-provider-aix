@@ -7,7 +7,7 @@ use App\Libraries\Wallet\V2\TestWallet;
 use App\Contracts\V2\IWalletCredentials;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-class AixSettleTest extends TestCase
+class AixCreditTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -33,25 +33,30 @@ class AixSettleTest extends TestCase
         app()->bind(IWallet::class, $wallet::class);
 
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayID',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         DB::table('aix.reports')->insert([
-            'trx_id' => 'testTransactionID',
-            'bet_amount' => 100.00,
-            'win_amount' => 0.00,
-            'updated_at' => null,
-            'created_at' => '2024-01-01 00:00:00'
+            'ext_id' => 'wager-testTransactionID',
+            'username' => 'testUsername',
+            'play_id' => 'testPlayeru001',
+            'web_id' => 1,
+            'currency' => 'IDR',
+            'game_code' => 1,
+            'bet_amount' => 100.0,
+            'bet_winlose' => 0,
+            'updated_at' => '2025-01-01 00:00:00',
+            'created_at' => '2025-01-01 00:00:00'
         ]);
 
         $request = [
-            'user_id' => 'testPlayID',
+            'user_id' => 'testPlayeru001',
             'amount' => 200,
             'prd_id' => 1,
             'txn_id' => 'testTransactionID',
-            'credit_time' => '2024-01-01 00:00:00'
+            'credit_time' => '2025-01-01 00:00:00'
         ];
 
         $response = $this->post('aix/prov/credit', $request, [
@@ -65,20 +70,17 @@ class AixSettleTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertDatabaseMissing('aix.reports', [
-            'trx_id' => 'testTransactionID',
-            'bet_amount' => 100.00,
-            'win_amount' => 0.00,
-            'updated_at' => null,
-            'created_at' => '2024-01-01 00:00:00'
-        ]);
-
         $this->assertDatabaseHas('aix.reports', [
-            'trx_id' => 'testTransactionID',
-            'bet_amount' => 100.00,
-            'win_amount' => 200.00,
-            'updated_at' => '2024-01-01 00:00:00',
-            'created_at' => '2024-01-01 00:00:00'
+            'ext_id' => 'payout-testTransactionID',
+            'username' => 'testUsername',
+            'play_id' => 'testPlayeru001',
+            'web_id' => 1,
+            'currency' => 'IDR',
+            'game_code' => '1',
+            'bet_amount' => 0,
+            'bet_winlose' => 100,
+            'created_at' => '2025-01-01 00:00:00',
+            'updated_at' => '2025-01-01 00:00:00'
         ]);
     }
 
@@ -86,7 +88,7 @@ class AixSettleTest extends TestCase
     public function test_credit_incompleteRequest_expectedData($param)
     {
         $request = [
-            'user_id' => 'testPlayID',
+            'user_id' => 'testPlayeru001',
             'amount' => 200,
             'prd_id' => 1,
             'txn_id' => 'testTransactionID',
@@ -120,7 +122,7 @@ class AixSettleTest extends TestCase
     public function test_credit_playerNotFound_expectedData()
     {
         $request = [
-            'user_id' => 'testPlayID',
+            'user_id' => 'testPlayeru001',
             'amount' => 200,
             'prd_id' => 1,
             'txn_id' => 'testTransactionID',
@@ -142,13 +144,13 @@ class AixSettleTest extends TestCase
     public function test_credit_invalidSecretKey_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayID',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         $request = [
-            'user_id' => 'testPlayID',
+            'user_id' => 'testPlayeru001',
             'amount' => 200,
             'prd_id' => 1,
             'txn_id' => 'testTransactionID',
@@ -167,24 +169,29 @@ class AixSettleTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_credit_txnIDNotFound_expectedData()
+    public function test_credit_betNotFound_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayID',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         DB::table('aix.reports')->insert([
-            'trx_id' => 'testTransactionID',
-            'bet_amount' => 100.00,
-            'win_amount' => 0.00,
-            'updated_at' => null,
-            'created_at' => '2024-01-01 00:00:00'
+            'ext_id' => 'wager-testTransactionID',
+            'username' => 'testUsername',
+            'play_id' => 'testPlayeru001',
+            'web_id' => 1,
+            'currency' => 'IDR',
+            'game_code' => 1,
+            'bet_amount' => 100.0,
+            'bet_winlose' => 0,
+            'updated_at' => '2025-01-01 00:00:00',
+            'created_at' => '2025-01-01 00:00:00'
         ]);
 
         $request = [
-            'user_id' => 'testPlayID',
+            'user_id' => 'testPlayeru001',
             'amount' => 200,
             'prd_id' => 1,
             'txn_id' => 'invalidTransactionID',
@@ -206,21 +213,40 @@ class AixSettleTest extends TestCase
     public function test_credit_transactionAlreadySettled_expectedData()
     {
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayID',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         DB::table('aix.reports')->insert([
-            'trx_id' => 'testTransactionID',
-            'bet_amount' => 100.00,
-            'win_amount' => 200.00,
-            'updated_at' => '2024-01-01 00:00:00',
-            'created_at' => '2024-01-01 00:00:00'
+            [
+                'ext_id' => 'wager-testTransactionID',
+                'username' => 'testUsername',
+                'play_id' => 'testPlayeru001',
+                'web_id' => 1,
+                'currency' => 'IDR',
+                'game_code' => 1,
+                'bet_amount' => 100.0,
+                'bet_winlose' => 0,
+                'updated_at' => '2025-01-01 00:00:00',
+                'created_at' => '2025-01-01 00:00:00'
+            ],
+            [
+                'ext_id' => 'payout-testTransactionID',
+                'username' => 'testUsername',
+                'play_id' => 'testPlayeru001',
+                'web_id' => 1,
+                'currency' => 'IDR',
+                'game_code' => 1,
+                'bet_amount' => 0,
+                'bet_winlose' => 100,
+                'updated_at' => '2025-01-01 00:00:00',
+                'created_at' => '2025-01-01 00:00:00'
+            ]
         ]);
 
         $request = [
-            'user_id' => 'testPlayID',
+            'user_id' => 'testPlayeru001',
             'amount' => 200,
             'prd_id' => 1,
             'txn_id' => 'testTransactionID',
@@ -253,25 +279,30 @@ class AixSettleTest extends TestCase
         app()->bind(IWallet::class, $wallet::class);
 
         DB::table('aix.players')->insert([
-            'play_id' => 'testPlayID',
+            'play_id' => 'testPlayeru001',
             'username' => 'testUsername',
             'currency' => 'IDR'
         ]);
 
         DB::table('aix.reports')->insert([
-            'trx_id' => 'testTransactionID',
-            'bet_amount' => 100.00,
-            'win_amount' => 200.00,
-            'updated_at' => null,
-            'created_at' => '2024-01-01 00:00:00'
+            'ext_id' => 'wager-testTransactionID',
+            'username' => 'testUsername',
+            'play_id' => 'testPlayeru001',
+            'web_id' => 1,
+            'currency' => 'IDR',
+            'game_code' => 1,
+            'bet_amount' => 100.0,
+            'bet_winlose' => 0,
+            'updated_at' => '2025-01-01 00:00:00',
+            'created_at' => '2025-01-01 00:00:00'
         ]);
 
         $request = [
-            'user_id' => 'testPlayID',
+            'user_id' => 'testPlayeru001',
             'amount' => 200,
             'prd_id' => 1,
             'txn_id' => 'testTransactionID',
-            'credit_time' => '2024-01-01 00:00:00'
+            'credit_time' => '2025-01-01 00:00:00'
         ];
 
         $response = $this->post('aix/prov/credit', $request, [
@@ -285,20 +316,17 @@ class AixSettleTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertDatabaseHas('aix.reports', [
-            'trx_id' => 'testTransactionID',
-            'bet_amount' => 100.00,
-            'win_amount' => 200.00,
-            'updated_at' => null,
-            'created_at' => '2024-01-01 00:00:00'
-        ]);
-
         $this->assertDatabaseMissing('aix.reports', [
-            'trx_id' => 'testTransactionID',
-            'bet_amount' => 100.00,
-            'win_amount' => 200.00,
-            'updated_at' => '2024-01-01 00:00:00',
-            'created_at' => '2024-01-01 00:00:00'
+            'ext_id' => 'payout-testTransactionID',
+            'username' => 'testUsername',
+            'play_id' => 'testPlayeru001',
+            'web_id' => 1,
+            'currency' => 'IDR',
+            'game_code' => '1',
+            'bet_amount' => 0,
+            'bet_winlose' => 100,
+            'created_at' => '2025-01-01 00:00:00',
+            'updated_at' => '2025-01-01 00:00:00'
         ]);
     }
 }

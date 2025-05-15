@@ -1,4 +1,5 @@
 <?php
+
 namespace Providers\Aix;
 
 use Providers\Aix\Contracts\ICredentials;

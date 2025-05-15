@@ -33,9 +33,13 @@ class AixService
 
     public function getLaunchUrl(Request $request): string
     {
-        $this->repository->createIgnorePlayer(playID: $request->playId, currency: $request->currency);
+        $this->repository->createIgnorePlayer(
+            playID: $request->playId,
+            username: $request->username,
+            currency: $request->currency
+        );
 
-        $credentials = $this->credentials->getCredentialsByCurrency($request->currency);
+        $credentials = $this->credentials->getCredentialsByCurrency(currency: $request->currency);
 
         $walletResponse = $this->wallet->Balance(credentials: $credentials, playID: $request->playId);
 
@@ -53,7 +57,7 @@ class AixService
             throw new PlayerNotFoundException;
 
         $credentials = $this->credentials->getCredentialsByCurrency(currency: $playerDetails->currency);
-        
+
         if ($request->header('secret-key') !== $credentials->getSecretKey())
             throw new InvalidSecretKeyException;
 
@@ -65,20 +69,29 @@ class AixService
         return $walletResponse['credit'];
     }
 
+    private function convertProviderDateTime(string $dateTime): string
+    {
+        return Carbon::parse($dateTime, self::PROVIDER_API_TIMEZONE)
+            ->setTimezone('GMT+8')
+            ->format('Y-m-d H:i:s');
+    }
+
     public function bet(Request $request): float
     {
-        $playerDetails = $this->repository->getPlayerByPlayID(playID: $request->user_id);
+        $playerData = $this->repository->getPlayerByPlayID(playID: $request->user_id);
 
-        if (is_null($playerDetails) === true)
+        if (is_null($playerData) === true)
             throw new PlayerNotFoundException;
 
-        $transactionData = $this->repository->getTransactionByTrxID(transactionID: $request->txn_id);
+        $extID = "wager-{$request->txn_id}";
+
+        $transactionData = $this->repository->getTransactionByExtID(extID: $extID);
 
         if (is_null($transactionData) === false)
             throw new TransactionAlreadyExistsException;
 
-        $credentials = $this->credentials->getCredentialsByCurrency(currency: $playerDetails->currency);
-        
+        $credentials = $this->credentials->getCredentialsByCurrency(currency: $playerData->currency);
+
         if ($request->header('secret-key') !== $credentials->getSecretKey())
             throw new InvalidSecretKeyException;
 
@@ -93,13 +106,16 @@ class AixService
         try {
             DB::connection('pgsql_write')->beginTransaction();
 
-            $transactionDate = Carbon::parse($request->debit_time, self::PROVIDER_API_TIMEZONE)
-                ->setTimezone(8)
-                ->format('Y-m-d H:i:s');
+            $transactionDate = $this->convertProviderDateTime(dateTime: $request->debit_time);
 
             $this->repository->createTransaction(
-                transactionID: $request->txn_id,
+                extID: $extID,
+                playID: $playerData->play_id,
+                username: $playerData->username,
+                currency: $playerData->currency,
+                gameCode: $request->prd_id,
                 betAmount: $request->amount,
+                betWinlose: 0,
                 transactionDate: $transactionDate
             );
 
@@ -111,9 +127,9 @@ class AixService
 
             $walletResponse = $this->wallet->wager(
                 credentials: $credentials,
-                playID: $playerDetails->play_id,
-                currency: $playerDetails->currency,
-                transactionID: $request->txn_id,
+                playID: $playerData->play_id,
+                currency: $playerData->currency,
+                transactionID: $extID,
                 amount: $request->amount,
                 report: $report
             );
@@ -142,25 +158,32 @@ class AixService
         if ($request->header('secret-key') !== $credentials->getSecretKey())
             throw new InvalidSecretKeyException;
 
-        $transactionData = $this->repository->getTransactionByTrxID(transactionID: $request->txn_id);
+        $betTransactionData =  $this->repository->getTransactionByExtID(extID: "wager-{$request->txn_id}");
 
-        if (is_null($transactionData) === true)
+        if (is_null($betTransactionData) === true)
             throw new ProviderTransactionNotFoundException;
 
-        if (is_null($transactionData->updated_at) === false)
+        $extID = "payout-{$request->txn_id}";
+
+        $transactionData = $this->repository->getTransactionByExtID(extID: $extID);
+
+        if (is_null($transactionData) === false)
             throw new TransactionAlreadySettledException;
 
         try {
             DB::connection('pgsql_write')->beginTransaction();
 
-            $transactionDate = Carbon::parse($request->credit_time, self::PROVIDER_API_TIMEZONE)
-                ->setTimezone('GMT+8')
-                ->format('Y-m-d H:i:s');
+            $transactionDate = $this->convertProviderDateTime(dateTime: $request->credit_time);
 
-            $this->repository->settleTransaction(
-                trxID: $request->txn_id,
-                winAmount: $request->amount,
-                settleTime: $transactionDate
+            $this->repository->createTransaction(
+                extID: $extID,
+                playID: $betTransactionData->play_id,
+                username: $betTransactionData->username,
+                currency: $betTransactionData->currency,
+                gameCode: $betTransactionData->game_code,
+                betAmount: 0,
+                betWinlose: $request->amount - $betTransactionData->bet_amount,
+                transactionDate: $transactionDate
             );
 
             $report = $this->walletReport->makeSlotReport(
@@ -171,9 +194,9 @@ class AixService
 
             $walletResponse = $this->wallet->payout(
                 credentials: $credentials,
-                playID: $request->user_id,
-                currency: $playerData->currency,
-                transactionID: "payout-{$request->txn_id}",
+                playID: $betTransactionData->play_id,
+                currency: $betTransactionData->currency,
+                transactionID: $extID,
                 amount: $request->amount,
                 report: $report
             );
